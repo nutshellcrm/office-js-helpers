@@ -4013,6 +4013,8 @@ var Dialog = /** @class */function () {
                     this._result = this._teamsDialog();
                 } else if (__WEBPACK_IMPORTED_MODULE_0__utilities__["c" /* Utilities */].isAddin) {
                     this._result = this._addinDialog();
+                } else if (__WEBPACK_IMPORTED_MODULE_0__utilities__["c" /* Utilities */].isEdge) {
+                    this._result = this._edgeDialog();
                 } else {
                     this._result = this._webDialog();
                 }
@@ -4066,7 +4068,7 @@ var Dialog = /** @class */function () {
             try {
                 var options = 'width=' + _this.size.width + ',height=' + _this.size.height + _this._windowFeatures;
                 window.open(_this.url, _this.url, options);
-                if (__WEBPACK_IMPORTED_MODULE_0__utilities__["c" /* Utilities */].isIEOrEdge) {
+                if (__WEBPACK_IMPORTED_MODULE_0__utilities__["c" /* Utilities */].isIE) {
                     _this._pollLocalStorageForToken(resolve, reject);
                 } else {
                     var handler_1 = function handler_1(event) {
@@ -4080,6 +4082,18 @@ var Dialog = /** @class */function () {
             } catch (exception) {
                 return reject(new DialogError('Unexpected error occurred while creating popup', exception));
             }
+        });
+    };
+    Dialog.prototype._edgeDialog = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            Office.context.ui.displayDialogAsync(_this.url, { width: _this.size.width$, height: _this.size.height$ }, function (result) {
+                if (result.status === Office.AsyncResultStatus.Failed) {
+                    reject(new DialogError(result.error.message, result.error));
+                } else {
+                    _this._pollLocalStorageForToken(resolve, reject);
+                }
+            });
         });
     };
     Dialog.prototype._pollLocalStorageForToken = function (resolve, reject) {
@@ -4794,7 +4808,29 @@ var Utilities = /** @class */function () {
          * Utility to check if the code is running inside of an add-in.
          */
         get: function get() {
-            return Utilities.host !== HostType.WEB;
+            return Utilities.host !== HostType.WEB && !Utilities.isEdge;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Utilities, "isIE", {
+        /**
+         * Utility to check if the browser is IE11.
+         */
+        get: function get() {
+            return (/Trident\//gi.test(window.navigator.userAgent)
+            );
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Utilities, "isEdge", {
+        /**
+         * Utility to check if the browser is Edge.
+         */
+        get: function get() {
+            return (/Edge\//gi.test(window.navigator.userAgent)
+            );
         },
         enumerable: true,
         configurable: true
@@ -4804,8 +4840,7 @@ var Utilities = /** @class */function () {
          * Utility to check if the browser is IE11 or Edge.
          */
         get: function get() {
-            return (/Edge\/|Trident\//gi.test(window.navigator.userAgent)
-            );
+            return Utilities.isIE || Utilities.isEdge;
         },
         enumerable: true,
         configurable: true
